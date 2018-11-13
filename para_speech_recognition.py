@@ -1,7 +1,7 @@
 import wx
 import wikipedia
 import wolframalpha
-import pyttsx3
+import speech_recognition as sr
 
 class MyFrame(wx.Frame):
     def __init__(self):
@@ -25,25 +25,32 @@ class MyFrame(wx.Frame):
     def OnEnter(self, event):
         input = self.txt.GetValue()
         input = input.lower()
-        try:
-            #wolframalpha
-            app_id = "65U2P2-LX969RK234"
-            client = wolframalpha.Client(app_id)
-            res = client.query(input)
-            answer = next(res.results).text
-            print answer
-            #espeak.synth("The answer is "+answer)
-        except:
-            #wikipedia
-            input = input.split(' ')
-            input = " ".join(input[2:])
-            #espeak.synth("Searched for "+input)
-            print wikipedia.summary(input)
+        if input == '':
+            r = sr.Recognizer()
+            with sr.Microphone() as source:
+                audio = r.listen(source)
+            try:
+                self.txt.SetValue(r.recognize_google(audio))
+            except sr.UnknownValueError:
+                print "Google Speech Recognition could not understand audio"
+            except sr.RequestError as e:
+                print "Could not request results from Google Speech Recognition service; {0}".format(e)
+        else:
+            try:
+                #wolframalpha
+                app_id = "65U2P2-LX969RK234"
+                client = wolframalpha.Client(app_id)
+                res = client.query(input)
+                answer = next(res.results).text
+                print answer
+            except:
+                #wikipedia
+                input = input.split(' ')
+                input = " ".join(input[2:])
+                print wikipedia.summary(input)
+
 
 if __name__ == "__main__":
     app = wx.App(True)
     frame = MyFrame()
-    engine = pyttsx3.init();
-    engine.say("Hello I am Para, the Python virtual Assistant. How can I help you?");
-    engine.runAndWait();
     app.MainLoop()
